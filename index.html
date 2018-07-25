@@ -10,7 +10,7 @@
 }
 
 console.log('Getting Ethereum address info.....');
-var addr = ('0x2e3f1522b954102f9899a3c98457663f09df5874');
+var addr = ('0x49fb988beeb010f69e9b86aa2a99586dfd379ff6');
 console.log('Address:', addr);
 
 console.log(web3.eth.coinbase);
@@ -394,11 +394,12 @@ var pixelContract = web3.eth.contract([
 ]);
     
 var pixel = pixelContract.at(addr);
-console.log(pixel);
+//console.log(pixel);
 
     function testContract(address) {
         // Reference to the deployed contract
         const token = pixel;
+        console.log(token);
         // Destination account for test
         var from = web3.eth.accounts[0];
         const to = web3.eth.accounts[1];

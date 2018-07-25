@@ -1,0 +1,112 @@
+<html>
+<script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js/dist/web3.min.js"></script>
+<script type="text/javascript">
+    if (typeof web3 !== 'undefined') {
+  web3 = new Web3(web3.currentProvider);
+} else {
+  // set the provider you want from Web3.providers
+  web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+}
+
+console.log('Getting Ethereum address info.....');
+var addr = ('0xf2a0d44cc8c0cee6bb5245d950d0465ba640d54d');
+console.log('Address:', addr);
+console.log(web3.eth.coinbase);
+
+    function watchBalance() {
+        var coinbase = web3.eth.coinbase;
+
+        var originalBalance = web3.eth.getBalance(coinbase).toNumber();
+        document.getElementById('coinbase').innerText = 'coinbase: ' + coinbase;
+        document.getElementById('original').innerText = ' Original gas balance: ' + originalBalance + '    watching...';
+
+        web3.eth.filter('latest').watch(function() {
+            var currentBalance = web3.eth.getBalance(coinbase).toNumber();
+            document.getElementById("current").innerText = 'Current gas balance: ' + currentBalance;
+            document.getElementById("diff").innerText = 'diff:    ' + (currentBalance - originalBalance);
+        });
+    }
+
+    var url = 'https://raw.githubusercontent.com/cloudyPotato/CloudyPotato_pixel_currency/master/ABIcontract.json';
+    function createABI(url) {
+        fetch(url).then(response => {
+            let jsonResponse = response.json(); 
+
+            jsonResponse.then(abi => {
+                let token = web3.eth.contract(abi).at(addr);
+                console.log('success');
+                transferPixel(from, to, token)
+            });
+        });
+    };
+
+    function transferPixel(from, to, token) {
+            document.getElementById('targetBalance').innerText = 'Original Pixel balance: ' + token.balanceOf(to);
+            //Call the transfer function
+            token.transfer(to, 10, {from: web3.eth.coinbase}, (err, res) => {
+                // Log transaction, in case you want to explore
+                console.log('tx: ' + res);
+            });
+            var originalBalance = web3.eth.getBalance(to).toNumber();
+            document.getElementById('targetAccount').innerText = 'target account: ' + to;
+
+            document.getElementById("current_to").innerText = 'Currenc Pixel balance: ' + token.balanceOf(to);
+    };
+
+    const from = web3.eth.accounts[0];
+    const to = web3.eth.accounts[1];
+
+/*
+var getJSON = function(url, callback) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.responseType = 'json';
+    xhr.onload = function() {
+      var status = xhr.status;
+      if (status === 200) {
+        callback(null, xhr.response);
+      } else {
+        callback(status, xhr.response);
+      }
+    };
+    xhr.send();
+};
+
+var pixelContract = getJSON('https://raw.githubusercontent.com/cloudyPotato/CloudyPotato_pixel_currency/master/ABIcontract.json',
+function(err, abi) {
+  if (err !== null) {
+    console.log('error fetching ABI' + err);
+  } else {
+    console.log('ABI fetch success');
+    var stringg = JSON.stringify(abi);
+    var abiJSON = JSON.parse(stringg)
+    //console.log(stringg)
+    contract = web3.eth.contract(abiJSON, addr);
+    return contract;
+  }
+});
+*/
+
+</script>
+
+</head>
+<body>
+    <h1>Pixel Balance</h1>
+    <p>Investor</p>
+    <button type="button" onClick="watchBalance();">watch balance</button>
+    <div></div>
+    <div id="coinbase"></div>
+    <div id="original"></div>
+    <div id="current"></div>
+    <div id="diff"></div>
+
+    <h1>Transfer Pixels</h1>
+    <p>Community</p>
+    <button type="button" onClick="createABI(url);">transfer 10 Pixels</button>
+    <div></div>
+    <div id="targetAccount"></div>
+    <div id="targetBalance"></div>
+    <div id="current_to"></div>
+    <div id="diff_to"></div>
+</body>
+</html>
