@@ -7,11 +7,13 @@
   // set the provider you want from Web3.providers
   web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 }
-
+console.log('NOTE: Using web3.js@0.20.6')
 console.log('Getting Ethereum address info.....');
-var addr = ('0xf2a0d44cc8c0cee6bb5245d950d0465ba640d54d');
+var addr = ('0x481dcf386f2228e2b8f6df21d40652a065eea64b');
 console.log('Address:', addr);
 console.log(web3.eth.coinbase);
+const from = web3.eth.accounts[0];
+const to = web3.eth.accounts[1];
 
     function watchBalance() {
         var coinbase = web3.eth.coinbase;
@@ -28,33 +30,72 @@ console.log(web3.eth.coinbase);
     }
 
     var url = 'https://raw.githubusercontent.com/cloudyPotato/CloudyPotato_pixel_currency/master/ABIcontract.json';
-    function createABI(url) {
+    function transferPixel(url) {
         fetch(url).then(response => {
             let jsonResponse = response.json(); 
 
             jsonResponse.then(abi => {
                 let token = web3.eth.contract(abi).at(addr);
                 console.log('success');
-                transferPixel(from, to, token)
+                transferPixelAction(from, to, token)
             });
         });
     };
 
-    function transferPixel(from, to, token) {
-            document.getElementById('targetBalance').innerText = 'Original Pixel balance: ' + token.balanceOf(to);
-            //Call the transfer function
-            token.transfer(to, 10, {from: web3.eth.coinbase}, (err, res) => {
-                // Log transaction, in case you want to explore
-                console.log('tx: ' + res);
-            });
-            var originalBalance = web3.eth.getBalance(to).toNumber();
-            document.getElementById('targetAccount').innerText = 'target account: ' + to;
+    function transferPixelAction(from, to, token) {
+        document.getElementById('targetBalance').innerText = 'Original Pixel balance: ' + token.balanceOf(to);
+        //Call the transfer function
+        token.transfer(to, 10, {from: web3.eth.coinbase}, (err, res) => {
+            // Log transaction, in case you want to explore
+            console.log('tx: ' + res);
+        });
+        var originalBalance = web3.eth.getBalance(to).toNumber();
+        document.getElementById('targetAccount').innerText = 'target account: ' + to;
 
-            document.getElementById("current_to").innerText = 'Currenc Pixel balance: ' + token.balanceOf(to);
+        document.getElementById("current_to").innerText = 'Currenc Pixel balance: ' + token.balanceOf(to);
     };
 
-    const from = web3.eth.accounts[0];
-    const to = web3.eth.accounts[1];
+    function checkBalance(target) {
+        fetch(url).then(response => {
+            let jsonResponse = response.json(); 
+
+            jsonResponse.then(abi => {
+                let token = web3.eth.contract(abi).at(addr);
+                //To do: how to have different button using same function without creating many getElementById
+                document.getElementById('checkBalance_from').innerText = 'Pixel balance: ' + token.balanceOf(target);
+                document.getElementById('checkBalance_to').innerText = 'Pixel balance: ' + token.balanceOf(target);
+            });
+        });        
+    }
+
+//==================================================================================
+//Below is still at experimental phase
+// To do: on contract, need to prohibit transfer_with_rate to transfer to self
+//==================================================================================
+
+    function transferWithRate(url, value, to) {
+        fetch(url).then(response => {
+            let jsonResponse = response.json(); 
+            jsonResponse.then(abi => {
+                let token = web3.eth.contract(abi).at(addr);
+                console.log('contract fetch success');
+                //NOTE: need to set default account to transfer from otherwise it'll return invalid address
+                web3.eth.defaultAccount = web3.eth.accounts[0];
+                document.getElementById('transferWithRate').innerText = 'Transferred 10 tokens with rate: ' + token.transfer_with_rate(to, value);
+            });
+        });
+    }
+
+    function checkCreditScore(url,to) {
+        fetch(url).then(response => {
+            let jsonResponse = response.json(); 
+            jsonResponse.then(abi => {
+                let token = web3.eth.contract(abi).at(addr);
+                console.log('contract fetch success');
+                document.getElementById('targetCreditScore').innerText = 'Target Credit Score: ' + token.creditScoreOf(to);
+            });
+        });
+    };
 
 /*
 var getJSON = function(url, callback) {
@@ -94,6 +135,9 @@ function(err, abi) {
     <h1>Pixel Balance</h1>
     <p>Investor</p>
     <button type="button" onClick="watchBalance();">watch balance</button>
+    <button type="button" onClick="checkBalance(from);">check balance</button>
+    <div></div>
+    <div id="checkBalance_from"></div>  
     <div></div>
     <div id="coinbase"></div>
     <div id="original"></div>
@@ -102,7 +146,16 @@ function(err, abi) {
 
     <h1>Transfer Pixels</h1>
     <p>Community</p>
-    <button type="button" onClick="createABI(url);">transfer 10 Pixels</button>
+    <button type="button" onClick="checkBalance(to);">check balance</button>
+    <button type="button" onClick="checkCreditScore(url,to)">Check traget credit score</button>
+    <button type="button" onClick="transferPixel(url);">transfer 10 Pixels</button>
+    <button type="button" onClick="transferWithRate(url,10,to)">Transfer 10 pixels with rate</button>    
+    <div></div>
+    <div id="checkBalance_to"></div>  
+    <div></div>   
+    <div id="targetCreditScore"></div>   
+    <div></div>
+    <div id="transferWithRate"></div>   
     <div></div>
     <div id="targetAccount"></div>
     <div id="targetBalance"></div>
